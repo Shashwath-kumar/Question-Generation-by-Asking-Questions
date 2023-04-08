@@ -6,7 +6,7 @@ class PrimalDualEncoder(nn.Module):
         super(PrimalDualEncoder, self).__init__()
         self.encoder = T5Model.from_pretrained(pretrained_model_name).encoder
 
-    def forward(self, input_ids, attention_mask=None):
-        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+    def forward(self, embeddings, attention_mask=None):
+        outputs = self.encoder(inputs_embeds=embeddings, attention_mask=attention_mask)
         contextual_embeddings = outputs.last_hidden_state
         return contextual_embeddings
