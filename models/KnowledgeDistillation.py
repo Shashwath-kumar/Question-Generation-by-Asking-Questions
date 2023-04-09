@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from transformers import T5ForConditionalGeneration, T5Tokenizer
+from transformers import T5Model, T5Tokenizer
 
 class KnowledgeDistillation(nn.Module):
     def __init__(self, pretrained_model_name, d_model, vocab_size):
         super(KnowledgeDistillation, self).__init__()
-        self.pretrained_model = T5ForConditionalGeneration.from_pretrained(pretrained_model_name)
+        self.pretrained_model = T5Model.from_pretrained(pretrained_model_name)
         self.Wm = nn.Linear(d_model, vocab_size)
         self.softmax = nn.Softmax(dim=-1)
         self.tokenizer = T5Tokenizer.from_pretrained(pretrained_model_name)
@@ -13,7 +13,7 @@ class KnowledgeDistillation(nn.Module):
     def forward(self, input_ids, input_mask, primal_dual_embeddings):
         # Get the contextual embeddings from the pretrained model
         with torch.no_grad():
-            outputs = self.pretrained_model(input_ids=input_ids, attention_mask=input_mask)
+            outputs = self.pretrained_model(input_ids=input_ids, attention_mask=input_mask, decoder_input_ids = input_ids)
             pretrained_contextual_embeddings = outputs.last_hidden_state
 
         # Get the output embeddings of the masked words from the primal-dual encoder
