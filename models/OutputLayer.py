@@ -42,7 +42,6 @@ class QuestionGenerationOutputLayer(nn.Module):
         self.output_layer = nn.Linear(d_model, vocab_size)
         self.pointer_memory = nn.Linear(d_model, 1)
         self.pointer = nn.Linear(d_model, 1)
-        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, decoder_output, memory, attention_mask=None):
         logits = self.output_layer(decoder_output)
@@ -55,10 +54,8 @@ class QuestionGenerationOutputLayer(nn.Module):
         if attention_mask is not None:
             pointer_scores = pointer_scores.masked_fill(~attention_mask.unsqueeze(1), float('-inf'))
         
-        pointer_probs = self.softmax(pointer_scores)
+        # Combine logits and pointer scores
+        combined_logits = torch.cat((logits, pointer_scores), dim=-1)
         
-        # Combine logits and pointer probabilities
-        extended_logits = torch.cat((logits, pointer_probs), dim=-1)
-        probabilities = self.softmax(extended_logits)
-        
-        return logits, probabilities
+        return combined_logits
+
