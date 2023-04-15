@@ -1,19 +1,19 @@
 import torch
 import torch.nn as nn
 from models import EmbeddingLayer, PrimalDualEncoder, QuestionDecoder, QuestionAnsweringOutputLayer, QuestionGenerationOutputLayer, KnowledgeDistillation
-from transformers import T5Tokenizer
+from transformers import AutoTokenizer
 import random
 
 class QuestionGenerationModel(nn.Module):
-    def __init__(self, pretrained_t5_name, d_model, device) -> None:
+    def __init__(self, pretrained_model_name, d_model, device) -> None:
         super(QuestionGenerationModel, self).__init__()
-        self.tokenizer = T5Tokenizer.from_pretrained(pretrained_t5_name, model_max_length = 512)
-        self.embedding_layer = EmbeddingLayer(pretrained_t5_name, d_model)
-        self.primal_dual_encoder = PrimalDualEncoder(pretrained_t5_name)
-        self.qg_question_decoder = QuestionDecoder(pretrained_t5_name)
-        self.qg_output_layer = QuestionGenerationOutputLayer(d_model, self.tokenizer.vocab_size)
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name, model_max_length = 512)
+        self.embedding_layer = EmbeddingLayer(pretrained_model_name, d_model)
+        self.primal_dual_encoder = PrimalDualEncoder(pretrained_model_name)
+        self.qg_question_decoder = QuestionDecoder(pretrained_model_name)
+        self.qg_output_layer = QuestionGenerationOutputLayer(pretrained_model_name)
         self.qa_output_layer = QuestionAnsweringOutputLayer(d_model)
-        self.kd_layer = KnowledgeDistillation(pretrained_t5_name, d_model, self.tokenizer.vocab_size)
+        self.kd_layer = KnowledgeDistillation(pretrained_model_name, d_model, self.tokenizer.vocab_size)
         self.device = device
 
         self.to(device)
@@ -23,7 +23,7 @@ class QuestionGenerationModel(nn.Module):
     
     def create_distillation_mask(self, tokens, mask_rate=0.15):
         mask = [random.random() < mask_rate for _ in tokens]
-        return mask + [False]
+        return [False] + mask + [False]
 
 
     def forward(self, 
@@ -48,12 +48,12 @@ class QuestionGenerationModel(nn.Module):
         qg_embeddings = self.embedding_layer(qg_input_ids, qg_task_ids, qg_segment_ids)
         qg_attention_mask = self.create_attention_mask(qg_input_ids).to(self.device)
         qg_encoder_outputs = self.primal_dual_encoder(qg_embeddings, qg_attention_mask)
-        qg_target_ids = question_input_ids
+        qg_target_ids = question_input_ids[:, :-1]
         qg_target_attention_mask = self.create_attention_mask(qg_target_ids).to(self.device)
         decoder_outputs = self.qg_question_decoder(input_ids=qg_target_ids,
                                    attention_mask=qg_target_attention_mask,
                                    encoder_hidden_states=qg_encoder_outputs)
-        logits = self.qg_output_layer(decoder_outputs, qg_encoder_outputs, qg_attention_mask)
+        logits = self.qg_output_layer(decoder_outputs)
 
         # AQ Module
         qa_embeddings = self.embedding_layer(qa_input_ids, qa_task_ids, qa_segment_ids)
