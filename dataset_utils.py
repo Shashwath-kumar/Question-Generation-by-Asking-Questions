@@ -28,31 +28,28 @@ def tokenize_and_preprocess(example):
     token_start = len(tokenizer(passage[:answer_start])['input_ids']) - 1
     token_end = len(tokenizer(passage[:answer_end])['input_ids']) - 1
     # Create input IDs tensor
-    qg_input_ids = tokenizer(passage +' </s> <s> '+ answer_text)['input_ids']
-
+    qg_input_ids = tokenizer(passage +'</s><s>'+ answer_text)['input_ids']
     # Create task IDs tensor (0 for question generation, 1 for question answering, 2 for KD)
     task_id = 0  # Question generation
     qg_task_ids = torch.tensor([task_id] * len(qg_input_ids))
-
     # Create segment IDs tensor (0 for passage, 1 for answer, 2 for question)
-    qg_segment_ids = torch.tensor([0] * len(passage_tokens) + [1] * len(answer_tokens) + [1])
-    # Create input_ids for AQ
-    qa_input_ids = tokenizer(passage + '</s> <s>' +question)['input_ids']
+    qg_segment_ids = torch.tensor([0] * (len(passage_tokens)+2) + [1] * (len(answer_tokens)+2))
 
+    # Create input_ids for AQ
+    qa_input_ids = tokenizer(passage + '</s><s>' +question)['input_ids']
     # Create task IDs tensor (0 for question generation, 1 for question answering, 2 for KD)
     task_id = 1  # Question answering
     qa_task_ids = torch.tensor([task_id] * len(qa_input_ids))
-
     # Create segment IDs tensor (0 for passage, 2 for question)
-    qa_segment_ids = torch.tensor([0] * len(passage_tokens) + [2] * len(question_tokens) + [2])
+    qa_segment_ids = torch.tensor([0] * (len(passage_tokens)+2) + [2] * (len(question_tokens)+2))
+
     # Create input_ids for KD
     kd_input_ids = tokenizer(passage)['input_ids']
     # Create task IDs tensor (0 for question generation, 1 for question answering, 2 for KD)
     task_id = 2  # Knowledge distillation
     kd_task_ids = torch.tensor([task_id] * len(kd_input_ids))
-
     # Create segment IDs tensor (0 for passage)
-    kd_segment_ids = torch.tensor([0] * (len(passage_tokens)) + [0])
+    kd_segment_ids = torch.tensor([0] * (len(passage_tokens)+2))
 
     return {
         'passage_tokens': passage_tokens,
