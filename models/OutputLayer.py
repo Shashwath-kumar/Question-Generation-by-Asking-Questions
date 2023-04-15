@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from transformers import AutoModelForSeq2SeqLM
 
 class QuestionAnsweringOutputLayer(nn.Module):
     def __init__(self, d_model):
@@ -37,25 +38,12 @@ class QuestionAnsweringOutputLayer(nn.Module):
 
 
 class QuestionGenerationOutputLayer(nn.Module):
-    def __init__(self, d_model, vocab_size):
+    def __init__(self, model_name):
         super(QuestionGenerationOutputLayer, self).__init__()
-        self.output_layer = nn.Linear(d_model, vocab_size)
-        self.pointer_memory = nn.Linear(d_model, 1)
-        self.pointer = nn.Linear(d_model, 1)
+        self.pretrained_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        self.output_layer = self.pretrained_model.lm_head
 
-    def forward(self, decoder_output, memory, attention_mask=None):
-        logits = self.output_layer(decoder_output)
-        
-        # Maxout pointer mechanism
-        memory_pointer_scores = self.pointer_memory(memory).transpose(-1, -2)
-        decoder_pointer_scores = self.pointer(decoder_output)
-        pointer_scores = decoder_pointer_scores + memory_pointer_scores
-        
-        if attention_mask is not None:
-            pointer_scores = pointer_scores.masked_fill(~attention_mask.unsqueeze(1), float('-inf'))
-        
-        # Combine logits and pointer scores
-        combined_logits = torch.cat((logits, pointer_scores), dim=-1)
-        
-        return combined_logits
+    def forward(self, decoder_output):
+        logits = self.output_layer(decoder_output)        
+        return logits
 
