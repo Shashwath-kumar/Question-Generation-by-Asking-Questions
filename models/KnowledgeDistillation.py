@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
-from transformers import T5Model, T5Tokenizer
+from transformers import AutoModel
 
 class KnowledgeDistillation(nn.Module):
     def __init__(self, pretrained_model_name, d_model, vocab_size):
         super(KnowledgeDistillation, self).__init__()
-        self.pretrained_model = T5Model.from_pretrained(pretrained_model_name)
+        self.pretrained_model = AutoModel.from_pretrained(pretrained_model_name)
+        d_model = d_model
         self.Wm = nn.Linear(d_model, vocab_size)
         self.softmax = nn.Softmax(dim=-1)
-        self.tokenizer = T5Tokenizer.from_pretrained(pretrained_model_name)
 
     def forward(self, input_ids, input_mask, primal_dual_embeddings):
         # Get the contextual embeddings from the pretrained model

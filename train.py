@@ -1,13 +1,12 @@
-import copy
 import torch
 import torch.nn as nn
-from transformers import T5Tokenizer
 from dataset_utils import get_train_dataset, get_test_dataset
 from final_model import QuestionGenerationModel
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup
+import config
 
-def train_model(model, train_dataloader, val_dataloader, device, num_epochs, learning_rate, tokenizer=None):
+def train_model(model, train_dataloader, val_dataloader, device, num_epochs, learning_rate):
     # Move the model to the device
     model = model.to(device)
     # Set up the optimizer and the loss function
@@ -32,8 +31,8 @@ def train_model(model, train_dataloader, val_dataloader, device, num_epochs, lea
 
             logits, start_scores, end_scores, _, _, y_en, y_pre = model(**batch)
 
-            target_ids = batch['question_input_ids']
-            qg_loss = ce_loss(logits.view(-1, logits.size(-1)), target_ids.view(-1))
+            target_ids = batch['question_input_ids'][:, 1:]
+            qg_loss = ce_loss(logits.reshape(-1, logits.size(-1)), target_ids.reshape(-1))
 
             answer_start = batch["token_start"]
             answer_end = batch["token_end"]
@@ -62,8 +61,8 @@ def train_model(model, train_dataloader, val_dataloader, device, num_epochs, lea
 
                 logits, start_scores, end_scores, _, _, y_en, y_pre = model(**batch)
 
-                target_ids = batch['question_input_ids']
-                qg_loss = ce_loss(logits.view(-1, logits.size(-1)), target_ids.view(-1))
+                target_ids = batch['question_input_ids'][:, 1:]
+                qg_loss = ce_loss(logits.reshape(-1, logits.size(-1)), target_ids.reshape(-1))
 
                 answer_start = batch["token_start"]
                 answer_end = batch["token_end"]
@@ -80,28 +79,18 @@ def train_model(model, train_dataloader, val_dataloader, device, num_epochs, lea
         # Save the best model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_model = copy.deepcopy(model)
-            torch.save(best_model.state_dict(), "best_model_4_gs_el1.pt")
-            print("Best model saved.")
+            torch.save(model.state_dict(), f"{config.model_save_name}")
+            print(f"Best model saved. {config.model_save_name}")
 
     return best_model
 
 if __name__ == '__main__':
-    pretrained_t5_name = 't5-small'
-    d_model = 512 # for t5-small
 
-    bsize = 4
-    train_dataloader = get_train_dataset(bsize)
-    print(train_dataloader.dataset[0]['question_input_ids'])
-    val_dataloader = get_test_dataset(bsize)
+    train_dataloader = get_train_dataset(config.batch_size)
+    val_dataloader = get_test_dataset(config.batch_size)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
-    model = QuestionGenerationModel(pretrained_t5_name, d_model, device)
-
-    num_epochs = 9
-    lr = 3e-5
+    model = QuestionGenerationModel(config.model_name, config.d_model, device)
     
-    tokenizer = T5Tokenizer.from_pretrained(pretrained_t5_name, model_max_length = 512)
-    
-    train_model(model, train_dataloader, val_dataloader, device, num_epochs, lr, tokenizer)
+    train_model(model, train_dataloader, val_dataloader, device, config.num_epochs, config.lr)

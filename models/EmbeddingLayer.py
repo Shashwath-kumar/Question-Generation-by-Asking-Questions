@@ -1,16 +1,16 @@
 import torch
 import torch.nn as nn
 import math
-from transformers import T5Model
+from transformers import AutoModel
 
 class EmbeddingLayer(nn.Module):
-    def __init__(self, pretrained_t5_name, d_model=512):
+    def __init__(self, pretrained_model, d_model):
         super(EmbeddingLayer, self).__init__()
+        self.pretrained_model = AutoModel.from_pretrained(pretrained_model)
         self.d_model = d_model
-        self.t5 = T5Model.from_pretrained(pretrained_t5_name)
-        self.word_embedding = self.t5.shared  # Use T5's word embeddings
-        self.task_embedding = nn.Embedding(3, d_model)  # Create a new embedding layer for task embeddings
-        self.segment_embedding = nn.Embedding(3, d_model)  # Create a new embedding layer for segment embeddings
+        self.word_embedding = self.pretrained_model.shared  # Use word embeddings
+        self.task_embedding = nn.Embedding(3, self.d_model)  # Create a new embedding layer for task embeddings
+        self.segment_embedding = nn.Embedding(3, self.d_model)  # Create a new embedding layer for segment embeddings
 
     def forward(self, input_ids, task_ids, segment_ids):
         word_embeds = self.word_embedding(input_ids)
