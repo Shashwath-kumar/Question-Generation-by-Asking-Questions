@@ -142,7 +142,7 @@ def custom_collate_fn(batch):
 def get_train_dataset(bsize = 32):
     train_dataset = load_dataset("squad", split="train")
     train_dataset = train_dataset.map(tokenize_and_preprocess)
-    train_dataloader = DataLoader(train_dataset, batch_size=bsize, shuffle=False)#, collate_fn= custom_collate_fn)
+    train_dataloader = DataLoader(train_dataset, batch_size=bsize, shuffle=False, collate_fn= custom_collate_fn)
     return train_dataloader
 
 def get_test_dataset(bsize = 32):
