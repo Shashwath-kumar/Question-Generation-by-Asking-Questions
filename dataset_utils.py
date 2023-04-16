@@ -10,9 +10,9 @@ tokenizer = AutoTokenizer.from_pretrained(config.model_name, model_max_length = 
 
 
 def tokenize_and_preprocess(example):
-    passage = example['context']
-    question = example['question']
-    answer_text = example['answers']['text'][0]  # Use the first answer in the list
+    passage = example['context'].strip()
+    question = example['question'].strip()
+    answer_text = example['answers']['text'][0].strip()  # Use the first answer in the list
 
     # Tokenize the passage, question, and answer_text
     passage_tokens = tokenizer.tokenize(passage)
@@ -147,6 +147,20 @@ def get_test_dataset(bsize = 32):
     test_dataset = test_dataset.map(tokenize_and_preprocess)
     test_dataloader = DataLoader(test_dataset, batch_size=bsize, shuffle=False, collate_fn= custom_collate_fn)
     return test_dataloader
+
+def get_distributed_dataset(bsize, world_size, rank):
+    train_dataset = load_dataset("squad", split="train")
+    train_dataset = train_dataset.map(tokenize_and_preprocess)
+    
+    test_dataset = load_dataset("squad", split="validation")
+    test_dataset = test_dataset.map(tokenize_and_preprocess)
+
+    train_sampler = DistributedSampler(train_dataset, world_size, rank)
+    val_sampler = DistributedSampler(test_dataset, world_size, rank)
+    train_dataloader = DataLoader(train_dataset, batch_size=bsize, sampler=train_sampler, collate_fn=custom_collate_fn)
+    val_dataloader = DataLoader(test_dataset, batch_size=bsize, sampler=val_sampler, collate_fn=custom_collate_fn)
+
+    return train_dataloader, val_dataloader
 
 if __name__ == '__main__':
     test_dataset = load_dataset("squad", split="validation")
