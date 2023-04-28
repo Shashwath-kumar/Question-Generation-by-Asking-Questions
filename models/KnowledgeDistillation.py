@@ -6,7 +6,6 @@ class KnowledgeDistillation(nn.Module):
     def __init__(self, pretrained_model_name, d_model, vocab_size):
         super(KnowledgeDistillation, self).__init__()
         self.pretrained_model = AutoModel.from_pretrained(pretrained_model_name)
-        d_model = d_model
         self.Wm = nn.Linear(d_model, vocab_size)
         self.softmax = nn.Softmax(dim=-1)
 

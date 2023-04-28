@@ -5,9 +5,8 @@ from transformers import AutoModel
 class QuestionDecoder(nn.Module):
     def __init__(self, pretrained_model_name):
         super(QuestionDecoder, self).__init__()
-        self.pretrained_model = AutoModel.from_pretrained(pretrained_model_name)
-        self.decoder = self.pretrained_model.decoder
-
+        self.decoder = AutoModel.from_pretrained(pretrained_model_name).decoder
+        
     def forward(self, input_ids, attention_mask=None, encoder_hidden_states=None, encoder_attention_mask=None):
         outputs = self.decoder(input_ids=input_ids,
                                attention_mask=attention_mask,

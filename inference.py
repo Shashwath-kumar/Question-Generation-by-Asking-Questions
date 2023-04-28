@@ -29,7 +29,7 @@ class BeamSearch:
 
                 for i, (hypothesis, score) in enumerate(hypotheses):
                     # Add hypothesis tokens to the input
-                    batch['question_input_ids'] = torch.tensor(hypothesis + [self.tokenizer.eos_token_id]).unsqueeze(0).to(device)
+                    batch['question_input_ids'] = torch.tensor(hypothesis + [self.tokenizer.eos_token_id]).unsqueeze(0).to(self.device)
                     # Get the logits from the model
                     logits, _, _, _, _, _, _ = self.model(**batch)
                     last_logits = logits[0, -1]
@@ -61,8 +61,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     model = QuestionGenerationModel(config.model_name, config.d_model, device)
-    model.load_state_dict(torch.load('bart_model_4_gs_polayer.pt', map_location=device))
-    # model.load_state_dict(torch.load('bart_model_4_gs_nomaxout.pt', map_location=device))
+    model.load_state_dict(torch.load('bart_model_4_new_val.pt', map_location=device))
     model.to(device)
     tokenizer = AutoTokenizer.from_pretrained(config.model_name, model_max_length = 512)
     val_dataloader = get_test_dataset(config.batch_size)

@@ -10,4 +10,4 @@ batch_size = 2
 num_epochs = 15
 lr = 3e-5
 
-model_save_name = 'bart_model_2bsize.pt'
+model_save_name = 'bart_model_2_new_train.pt'
