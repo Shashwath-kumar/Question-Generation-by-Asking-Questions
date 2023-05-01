@@ -43,7 +43,7 @@ python inference.py
 
 ## References
 
-This is an unofficial implementation of the following paper:
+This is an unofficial implementation of the following EMNLP paper:
 
 ```
 @inproceedings{wang-etal-2022-learning-generate,
