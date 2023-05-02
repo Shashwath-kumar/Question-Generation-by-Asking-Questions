@@ -17,6 +17,10 @@ The framework combines question generation (primal) with question answering (dua
 - Question answering: Re-asks generated question to ensure target answer is obtained
 - Knowledge distillation: Improves generalization ability for generating uncommon words
 
+## Finetuned model
+
+- QG model finetuned on SQuAD dataset. [link](https://github.com/Shashwath-kumar/Question-Generation-by-Asking-Questions/releases/download/QG_SQuAD/QG_SQuAD.pt)
+
 ## Requirements
 
 To install the required dependencies, run:
