@@ -10,4 +10,4 @@ batch_size = 2
 num_epochs = 15
 lr = 3e-5
 
-model_save_name = 'QG_SQuAD_scam.pt'
+model_save_name = 'QG_SQuAD.pt'
